@@ -18,36 +18,48 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/Devops1224789/Devops-Mega-project.git'
             }
         }
-        stage('Terraform init') {
-            steps {
-                sh 'terraform init'
-            }
-        }
-        stage('Plan') {
-            steps {
-                sh 'terraform plan -out tfplan'
-                sh 'terraform show -no-color tfplan > tfplan.txt'
-            }
-        }
-        stage('Apply / Destroy') {
-            steps {
-                script {
-                    if (params.action == 'apply') {
-                        if (!params.autoApprove) {
-                            def plan = readFile 'tfplan.txt'
-                            input message: "Do you want to apply the plan?",
-                            parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
-                        }
 
-                        sh 'terraform ${action} -input=false tfplan'
-                    } else if (params.action == 'destroy') {
-                        sh 'terraform ${action} --auto-approve'
-                    } else {
-                        error "Invalid action selected. Please choose either 'apply' or 'destroy'."
-                    }
+        stage('Terraform Init') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform init'
                 }
             }
         }
 
+        stage('Plan') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform show -no-color tfplan > tfplan.txt'
+                }
+            }
+        }
+
+        stage('Apply / Destroy') {
+            steps {
+                dir('terraform') {
+                    script {
+                        if (params.action == 'apply') {
+
+                            if (!params.autoApprove) {
+                                def plan = readFile 'tfplan.txt'
+                                input message: "Do you want to apply the plan?",
+                                parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
+                            }
+
+                            sh "terraform ${params.action} -input=false tfplan"
+
+                        } else if (params.action == 'destroy') {
+
+                            sh "terraform ${params.action} --auto-approve"
+
+                        } else {
+                            error "Invalid action selected."
+                        }
+                    }
+                }
+            }
+        }
     }
 }
