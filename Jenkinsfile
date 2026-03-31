@@ -16,7 +16,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Devops1224789/Devops-Mega-project.git'
+                git branch: 'main', url: 'https://github.com/sagarhursale/terraform-jenkins-pipeline.git'
             }
         }
 
